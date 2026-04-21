@@ -19,9 +19,9 @@ interface RadarChartProps {
 }
 
 const COLORS = [
-  '#22c55e',  // Green - bright
-  '#4ade80',  // Light green
-  '#fbbf24',  // Amber/Yellow
+  '#22c55e',  // Green
+  '#3b82f6',  // Blue
+  '#f97316',  // Orange
   '#a855f7'   // Purple
 ];
 
@@ -194,9 +194,9 @@ const RadarChart: React.FC<RadarChartProps> = ({ sessions, metrics }) => {
                 <text
                   x={labelX}
                   y={labelY}
-                  fontSize={11}
-                  fontWeight={600}
-                  fill="#e7e5e4"
+                  fontSize={12}
+                  fontWeight={700}
+                  fill="#1c1917"
                   textAnchor="middle"
                   dominantBaseline="middle"
                 >

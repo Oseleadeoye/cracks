@@ -17,12 +17,20 @@ const MiniChart = ({ data, color, width = 200, height = 60 }) => {
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear with light background
-    ctx.fillStyle = '#1c1917';  // Dark but visible background
+    // Get theme-aware colors from CSS variables
+    const computedStyle = getComputedStyle(document.documentElement);
+    const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+
+    // Use CSS variables for theme-aware colors with fallbacks - use bg-tertiary to match chart-box container
+    const bgColor = computedStyle.getPropertyValue('--bg-tertiary').trim() || (isLightMode ? '#f1f5f9' : '#292524');
+    const gridColor = computedStyle.getPropertyValue('--border-secondary').trim() || (isLightMode ? '#cbd5e1' : '#44403c');
+
+    // Clear with theme-aware background
+    ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Draw subtle grid lines
-    ctx.strokeStyle = '#44403c';  // Visible gray
+    // Draw subtle grid lines with theme-aware color
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 0.5;
     ctx.beginPath();
     for (let i = 1; i < 4; i++) {
