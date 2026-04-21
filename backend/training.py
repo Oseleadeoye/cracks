@@ -98,6 +98,22 @@ def train_yolo(config: Dict, session_id: str, on_epoch_end: Optional[Callable] =
                     metrics['f1'] = 2 * (metrics['precision'] * metrics['recall']) / (metrics['precision'] + metrics['recall'])
                 else:
                     metrics['f1'] = 0.0
+                
+                # Extract validation losses from results_dict with 'val/' prefix
+                # YOLO stores these as val/box_loss, val/cls_loss, val/dfl_loss
+                val_box = results_dict.get('val/box_loss', 0.0)
+                val_cls = results_dict.get('val/cls_loss', 0.0)
+                val_dfl = results_dict.get('val/dfl_loss', 0.0)
+                
+                if val_box and float(val_box) > 0:
+                    metrics['val_box_loss'] = to_float(val_box)
+                    print(f"Extracted val_box_loss: {metrics['val_box_loss']}")
+                if val_cls and float(val_cls) > 0:
+                    metrics['val_cls_loss'] = to_float(val_cls)
+                    print(f"Extracted val_cls_loss: {metrics['val_cls_loss']}")
+                if val_dfl and float(val_dfl) > 0:
+                    metrics['val_dfl_loss'] = to_float(val_dfl)
+                    print(f"Extracted val_dfl_loss: {metrics['val_dfl_loss']}")
 
             print(f"Metrics: {metrics}")
 

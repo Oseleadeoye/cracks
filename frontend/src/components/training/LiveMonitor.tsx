@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Activity, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Activity, RotateCcw, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 import { LED } from '../ui/LED';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -35,10 +35,72 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
   const [currentBatch, setCurrentBatch] = useState<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Check if validation losses are available in the data
-  const hasValidationLoss = metrics.length > 0 && 
-    (metrics[metrics.length - 1]?.val_box_loss !== undefined ||
-     metrics[metrics.length - 1]?.val_cls_loss !== undefined);
+  // Check if validation losses are available in the data (either defined or greater than 0)
+  const hasValidationLoss = metrics.length > 0 && metrics.some(m => 
+    (m.val_box_loss !== undefined && m.val_box_loss > 0) ||
+    (m.val_cls_loss !== undefined && m.val_cls_loss > 0)
+  );
+
+  // Detect overfitting patterns
+  const overfittingStatus = useMemo(() => {
+    if (metrics.length < 10) return null; // Need enough data
+    
+    const recent = metrics.slice(-10); // Last 10 epochs
+    const older = metrics.slice(-20, -10); // Previous 10 epochs
+    
+    if (older.length < 5 || recent.length < 5) return null;
+    
+    // Calculate trends
+    const avgLossOlder = older.reduce((sum, m) => sum + m.box_loss, 0) / older.length;
+    const avgLossRecent = recent.reduce((sum, m) => sum + m.box_loss, 0) / recent.length;
+    const lossImproving = avgLossRecent < avgLossOlder * 0.95; // Loss dropped by 5%+
+    
+    // Check validation metrics (precision, mAP50)
+    const hasValidationMetrics = recent.some(m => m.precision !== undefined && m.precision > 0);
+    
+    if (hasValidationMetrics) {
+      const avgPrecisionOlder = older.reduce((sum, m) => sum + (m.precision || 0), 0) / older.length;
+      const avgPrecisionRecent = recent.reduce((sum, m) => sum + (m.precision || 0), 0) / recent.length;
+      const precisionDeclining = avgPrecisionRecent < avgPrecisionOlder * 0.95;
+      const precisionStagnant = Math.abs(avgPrecisionRecent - avgPrecisionOlder) < 0.02;
+      
+      const avgMapOlder = older.reduce((sum, m) => sum + (m.mAP50 || 0), 0) / older.length;
+      const avgMapRecent = recent.reduce((sum, m) => sum + (m.mAP50 || 0), 0) / recent.length;
+      const mapDeclining = avgMapRecent < avgMapOlder * 0.95;
+      const mapStagnant = Math.abs(avgMapRecent - avgMapOlder) < 0.02;
+      
+      // Overfitting: loss improving but metrics declining/stagnant
+      if (lossImproving && (precisionDeclining || mapDeclining)) {
+        return {
+          type: 'severe',
+          message: 'Validation metrics declining while training loss improves. Model is overfitting!',
+          recommendation: 'Consider early stopping or reducing epochs.'
+        };
+      }
+      
+      if (lossImproving && (precisionStagnant || mapStagnant)) {
+        return {
+          type: 'warning',
+          message: 'Training loss improving but validation metrics stagnant. Risk of overfitting.',
+          recommendation: 'Monitor closely - consider stopping if metrics don\'t improve.'
+        };
+      }
+    }
+    
+    return null;
+  }, [metrics]);
+
+  // Debug logging
+  useEffect(() => {
+    if (metrics.length > 0) {
+      const latest = metrics[metrics.length - 1];
+      console.log('Latest metrics:', latest);
+      console.log('Has validation loss:', hasValidationLoss);
+      console.log('Overfitting status:', overfittingStatus);
+      console.log('val_box_loss:', latest?.val_box_loss);
+      console.log('val_cls_loss:', latest?.val_cls_loss);
+    }
+  }, [metrics]);
 
   useEffect(() => {
     if (initialActiveSession) {
@@ -136,6 +198,34 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
             />
           </div>
 
+          {/* Overfitting Warning */}
+          {overfittingStatus && (
+            <div className={`rounded-lg p-3 border ${
+              overfittingStatus.type === 'severe' 
+                ? 'bg-red-500/10 border-red-500/30' 
+                : 'bg-amber-500/10 border-amber-500/30'
+            }`}>
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className={
+                  overfittingStatus.type === 'severe' ? 'text-red-500' : 'text-amber-500'
+                } />
+                <div className="flex-1">
+                  <div className={`text-xs font-semibold ${
+                    overfittingStatus.type === 'severe' ? 'text-red-600' : 'text-amber-600'
+                  }`}>
+                    {overfittingStatus.type === 'severe' ? '⚠️ Overfitting Detected' : '⚡ Overfitting Risk'}
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                    {overfittingStatus.message}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 italic">
+                    💡 {overfittingStatus.recommendation}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Live Status (Batch metrics) */}
           {(currentBatch || metrics.length === 0) && (
             <div className="bg-[var(--bg-secondary)]/60 border border-[var(--border-primary)] rounded-lg p-3">
@@ -196,11 +286,16 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
                     {metrics[0]?.dfl_loss > 0 && (
                       <Line type="monotone" dataKey="dfl_loss" stroke="#f97316" strokeWidth={2} dot={metrics.length < 20} name="Train DFL Loss" />
                     )}
-                    {hasValidationLoss && (
+                    {/* Validation losses - show if any metric has validation data */}
+                    {(metrics.some(m => m.val_box_loss !== undefined) || metrics.some(m => m.val_cls_loss !== undefined)) && (
                       <>
-                        <Line type="monotone" dataKey="val_box_loss" stroke="#22c55e" strokeWidth={2} dot={metrics.length < 20} name="Val Box Loss" strokeDasharray="5 5" />
-                        <Line type="monotone" dataKey="val_cls_loss" stroke="#3b82f6" strokeWidth={2} dot={metrics.length < 20} name="Val Cls Loss" strokeDasharray="5 5" />
-                        {metrics[0]?.val_dfl_loss > 0 && (
+                        {metrics.some(m => m.val_box_loss !== undefined) && (
+                          <Line type="monotone" dataKey="val_box_loss" stroke="#22c55e" strokeWidth={2} dot={metrics.length < 20} name="Val Box Loss" strokeDasharray="5 5" />
+                        )}
+                        {metrics.some(m => m.val_cls_loss !== undefined) && (
+                          <Line type="monotone" dataKey="val_cls_loss" stroke="#3b82f6" strokeWidth={2} dot={metrics.length < 20} name="Val Cls Loss" strokeDasharray="5 5" />
+                        )}
+                        {metrics.some(m => m.val_dfl_loss !== undefined && m.val_dfl_loss > 0) && (
                           <Line type="monotone" dataKey="val_dfl_loss" stroke="#f97316" strokeWidth={2} dot={metrics.length < 20} name="Val DFL Loss" strokeDasharray="5 5" />
                         )}
                       </>
@@ -215,6 +310,49 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
               </div>
             )}
           </div>
+
+          {/* Validation Metrics Chart - show if validation metrics exist */}
+          {metrics.length > 0 && metrics.some(m => m.precision !== undefined || m.mAP50 !== undefined) && (
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={16} className="text-[var(--accent-primary)]" />
+                <span className="text-sm font-medium text-[var(--text-secondary)]">Validation Metrics</span>
+                <span className="text-xs text-[var(--text-muted)]">
+                  (Precision, Recall, mAP)
+                </span>
+              </div>
+              
+              <div className="h-48 bg-[var(--bg-secondary)]/50 rounded-lg border border-[var(--border-primary)] p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={metrics} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
+                    <XAxis dataKey="epoch" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
+                    <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} domain={[0, 1]} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: '8px', fontSize: '12px' }}
+                      itemStyle={{ color: 'var(--text-secondary)' }}
+                      formatter={(value: number) => `${(value * 100).toFixed(1)}%`}
+                    />
+                    {metrics.some(m => m.precision !== undefined) && (
+                      <Line type="monotone" dataKey="precision" stroke="#ec4899" strokeWidth={2} dot={metrics.length < 20} name="Precision" />
+                    )}
+                    {metrics.some(m => m.recall !== undefined) && (
+                      <Line type="monotone" dataKey="recall" stroke="#06b6d4" strokeWidth={2} dot={metrics.length < 20} name="Recall" />
+                    )}
+                    {metrics.some(m => m.f1 !== undefined) && (
+                      <Line type="monotone" dataKey="f1" stroke="#8b5cf6" strokeWidth={2} dot={metrics.length < 20} name="F1 Score" />
+                    )}
+                    {metrics.some(m => m.mAP50 !== undefined) && (
+                      <Line type="monotone" dataKey="mAP50" stroke="#f59e0b" strokeWidth={2} dot={metrics.length < 20} name="mAP50" />
+                    )}
+                    {metrics.some(m => m.mAP50_95 !== undefined) && (
+                      <Line type="monotone" dataKey="mAP50_95" stroke="#10b981" strokeWidth={2} dot={metrics.length < 20} name="mAP50-95" />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
 
           {/* Metric Guide */}
           <div className="mt-6 pt-4 border-t border-[var(--border-primary)]/50">
@@ -258,6 +396,66 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
                   </div>
                 </div>
               )}
+              {metrics.some(m => m.precision !== undefined || m.mAP50 !== undefined) && (
+                <>
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-pink-500 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-secondary)]">Precision</div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                        Percentage of correct crack detections out of all detections. Higher is better.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-secondary)]">Recall</div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                        Percentage of actual cracks that were detected. Higher is better.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-secondary)]">F1 Score</div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                        Harmonic mean of Precision and Recall. Balances both metrics.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-secondary)]">mAP50</div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                        Mean Average Precision at 50% IoU threshold. Key object detection metric.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-secondary)]">mAP50-95</div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                        Mean Average Precision across IoU thresholds 0.5 to 0.95. Stricter metric.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="flex gap-3 pt-2 border-t border-[var(--border-primary)]/30">
+                <div className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                <div>
+                  <div className="text-xs font-semibold text-[var(--text-secondary)]">Overfitting Detection</div>
+                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed italic">
+                    The system monitors for overfitting: when training loss improves but validation metrics (Precision, mAP) 
+                    stagnate or decline. <strong>Warning signs:</strong> large gap between improving loss and flat metrics, 
+                    or metrics that peak then drop while loss keeps falling.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -309,6 +507,42 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Validation Metrics Cards */}
+          {metrics.length > 0 && metrics.some(m => m.precision !== undefined || m.mAP50 !== undefined) && (
+            <div className="grid grid-cols-5 gap-2 mt-4 p-3 bg-[var(--bg-tertiary)]/50 rounded-lg">
+              <div className="text-center">
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">Precision</div>
+                <div className="font-mono text-xs text-pink-500">
+                  {(metrics[metrics.length - 1].precision * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="text-center border-x border-[var(--border-primary)]">
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">Recall</div>
+                <div className="font-mono text-xs text-cyan-500">
+                  {(metrics[metrics.length - 1].recall * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="text-center border-r border-[var(--border-primary)]">
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">F1</div>
+                <div className="font-mono text-xs text-violet-500">
+                  {(metrics[metrics.length - 1].f1 * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="text-center border-r border-[var(--border-primary)]">
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">mAP50</div>
+                <div className="font-mono text-xs text-amber-500">
+                  {(metrics[metrics.length - 1].mAP50 * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">mAP50-95</div>
+                <div className="font-mono text-xs text-emerald-500">
+                  {(metrics[metrics.length - 1].mAP50_95 * 100).toFixed(1)}%
+                </div>
+              </div>
             </div>
           )}
         </div>

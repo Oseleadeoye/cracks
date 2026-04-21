@@ -21,6 +21,11 @@ def parse_yolo_results_csv(csv_path):
                 cls_loss = float(row.get('train/cls_loss', row.get('train/cls_loss ', 0.0)))
                 dfl_loss = float(row.get('train/dfl_loss', row.get('train/dfl_loss ', 0.0)))
                 
+                # Validation losses (if available)
+                val_box_loss = float(row.get('val/box_loss', row.get('val/box_loss ', 0.0)))
+                val_cls_loss = float(row.get('val/cls_loss', row.get('val/cls_loss ', 0.0)))
+                val_dfl_loss = float(row.get('val/dfl_loss', row.get('val/dfl_loss ', 0.0)))
+                
                 prec = float(row.get('metrics/precision(B)', row.get('metrics/precision(M)', 0.0)))
                 rec = float(row.get('metrics/recall(B)', row.get('metrics/recall(M)', 0.0)))
                 map50 = float(row.get('metrics/mAP50(B)', row.get('metrics/mAP50(M)', 0.0)))
@@ -31,7 +36,7 @@ def parse_yolo_results_csv(csv_path):
                 if (prec + rec) > 0:
                     f1 = 2 * (prec * rec) / (prec + rec)
                     
-                metrics.append({
+                metric_entry = {
                     'epoch': epoch,
                     'box_loss': box_loss,
                     'cls_loss': cls_loss,
@@ -42,7 +47,17 @@ def parse_yolo_results_csv(csv_path):
                     'mAP50_95': map50_95,
                     'fitness': fit,
                     'f1': f1
-                })
+                }
+                
+                # Add validation losses if they exist (non-zero)
+                if val_box_loss > 0:
+                    metric_entry['val_box_loss'] = val_box_loss
+                if val_cls_loss > 0:
+                    metric_entry['val_cls_loss'] = val_cls_loss
+                if val_dfl_loss > 0:
+                    metric_entry['val_dfl_loss'] = val_dfl_loss
+                    
+                metrics.append(metric_entry)
     except Exception as e:
         print(f"Failed to parse {csv_path}: {e}")
     return metrics
