@@ -4,20 +4,20 @@ import { Layers, Settings, GitBranch, Box, Info, ChevronDown, ChevronUp } from '
 import './NodeStyles.css';
 
 const modelTypes = [
-  { id: 'yolov11', name: 'YOLOv11', desc: 'Latest architecture, best accuracy' },
-  { id: 'yolov26', name: 'YOLOv26', desc: 'Production-ready, optimized speed' }
+  { id: 'yolo11', name: 'YOLO11', desc: 'Latest YOLO architecture, best efficiency' },
+  { id: 'yolo11-seg', name: 'YOLO11-Seg', desc: 'Segmentation variant with mask prediction' }
 ];
 
 const sizeVariants = [
-  { id: 'n', name: 'Nano', params: '1.9M', speed: 'Fastest' },
-  { id: 's', name: 'Small', params: '5.7M', speed: 'Fast' },
-  { id: 'm', name: 'Medium', params: '11.2M', speed: 'Balanced' },
-  { id: 'l', name: 'Large', params: '25.5M', speed: 'Accurate' }
+  { id: 'n', name: 'Nano', params: '2.6M', speed: 'Fastest' },
+  { id: 's', name: 'Small', params: '10.1M', speed: 'Fast' },
+  { id: 'm', name: 'Medium', params: '20.0M', speed: 'Balanced' },
+  { id: 'l', name: 'Large', params: '25.3M', speed: 'Accurate' }
 ];
 
 const ModelNode = ({ data }) => {
-  const [selectedModel, setSelectedModel] = useState('yolov11');
-  const [selectedSize, setSelectedSize] = useState('m');
+  const [selectedModel, setSelectedModel] = useState('yolo11-seg');
+  const [selectedSize, setSelectedSize] = useState('n');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showArchitecture, setShowArchitecture] = useState(false);
 

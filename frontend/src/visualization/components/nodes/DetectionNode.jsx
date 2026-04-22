@@ -97,16 +97,16 @@ const DetectionNode = ({ data }) => {
           </button>
         </div>
 
-        {/* Upload Tab */}
-        {activeTab === 'upload' && (
-          <div className="tab-content upload-tab">
-            <div 
-              className="drop-zone"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload size={32} className="drop-icon" />
-              <p>Click to upload or drag & drop</p>
-              <span className="hint">Supports JPG, PNG, WEBP</span>
+          {/* Upload Tab */}
+          {activeTab === 'upload' && (
+            <div className="tab-content upload-tab">
+              <div 
+                className="drop-zone"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload size={32} className="drop-icon" />
+                <p>Upload or drag & drop photo or video</p>
+                <span className="hint">Supports JPG, PNG, WEBP</span>
               <input 
                 ref={fileInputRef}
                 type="file" 

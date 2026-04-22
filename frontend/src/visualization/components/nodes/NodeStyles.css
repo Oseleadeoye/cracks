@@ -49,7 +49,7 @@
 .react-flow__edge-path,
 svg .react-flow__edge-path,
 .react-flow__edges svg path {
-  stroke: #ffffff !important;
+  stroke: rgb(136, 136, 136) !important;
   stroke-width: 3px !important;
   stroke-linecap: round !important;
   stroke-dasharray: 6, 4 !important;
@@ -61,7 +61,7 @@ svg .react-flow__edge-path,
 
 /* Animated flowing effect - dashdraw animation */
 .react-flow__edge.animated .react-flow__edge-path {
-  animation: dashdraw 0.5s linear infinite !important;
+  animation: dashdraw 1s linear infinite !important;
 }
 
 @keyframes dashdraw {
@@ -94,7 +94,7 @@ svg .react-flow__edge-path,
 
 /* Selected edge highlight */
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #e5e5e5 !important;
+  stroke: rgb(170, 170, 170) !important;
   stroke-width: 4px !important;
 }
 
@@ -742,10 +742,12 @@ svg .react-flow__edge-path,
 .layer-block {
   display: flex;
   flex-direction: column;
+  align-items: center;
   padding: 10px 12px;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   border-radius: 8px;
   color: white;
+  text-align: center;
 }
 
 .layer-name {
@@ -762,12 +764,34 @@ svg .react-flow__edge-path,
   font-size: 10px;
   color: var(--text-muted);
   padding: 4px 0;
+  text-align: center;
 }
 
 .arch-arrow {
   text-align: center;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+/* Architecture Layer Color Variations */
+.arch-layer.input .layer-block {
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+}
+
+.arch-layer.backbone .layer-block {
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+}
+
+.arch-layer.neck .layer-block {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.arch-layer.head .layer-block {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+}
+
+.arch-layer.output .layer-block {
+  background: linear-gradient(135deg, #a855f7, #c084fc);
 }
 
 .hyperparams {
