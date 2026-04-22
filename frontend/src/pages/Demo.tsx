@@ -54,7 +54,7 @@ const demoItems = [
     type: 'image',
     title: 'Settlement Pattern Analysis',
     description: 'Structural settlement evaluation',
-    src: '/demo/orig_settlement.jpg'
+    src: '/demo/latest.jpg'
   },
   {
     id: 4,
