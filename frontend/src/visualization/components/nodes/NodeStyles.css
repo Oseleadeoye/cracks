@@ -183,6 +183,14 @@ svg .react-flow__edge-path,
   border-color: #a855f7;
 }
 
+.node-card.augmentation-node {
+  border-color: #6366f1;
+}
+
+.node-card.augmentation-node .node-icon {
+  color: #6366f1;
+}
+
 .node-card.dataset-node.dragging {
   background: var(--success-bg);
   border-color: var(--accent-primary);
@@ -470,6 +478,101 @@ svg .react-flow__edge-path,
   color: var(--accent-primary);
   font-size: 10px;
   font-weight: 500;
+}
+
+/* ============================================
+   DATA AUGMENTATION NODE STYLES
+   ============================================ */
+
+.augmentation-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  line-height: 1.4;
+}
+
+.augmentation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.augmentation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  transition: all 0.2s;
+}
+
+.augmentation-item.enabled {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.augmentation-item.disabled {
+  opacity: 0.6;
+}
+
+.aug-icon-wrapper {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 6px;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.aug-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+
+.aug-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.aug-value {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.augmentation-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  font-size: 11px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.summary-label {
+  color: var(--text-muted);
+}
+
+.summary-value {
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .file-input {

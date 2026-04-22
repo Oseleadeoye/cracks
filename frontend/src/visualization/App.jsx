@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import './App.css';
 import FlowCanvas from './components/FlowCanvas';
 import DatasetNode from './components/nodes/DatasetNode';
+import DataAugmentationNode from './components/nodes/DataAugmentationNode';
 import ModelNode from './components/nodes/ModelNode';
 import TrainingNode from './components/nodes/TrainingNode';
 import DetectionNode from './components/nodes/DetectionNode';
@@ -11,6 +12,7 @@ import { useCrackDetectionStore } from './stores/crackDetectionStore';
 
 const nodeTypes = {
   dataset: DatasetNode,
+  augmentation: DataAugmentationNode,
   model: ModelNode,
   training: TrainingNode,
   detection: DetectionNode,
@@ -49,7 +51,7 @@ function App() {
   }, []);
 
   // Define nodes for the crack detection workflow
-  // Flow: Dataset → Model Architecture → Training Monitor → [Detection ↑ Metrics Dashboard]
+  // Flow: Dataset → Data Augmentation → Model Architecture → Training Monitor → [Detection ↑ Metrics Dashboard]
   const nodes = useMemo(() => [
     {
       id: 'dataset',
@@ -62,9 +64,17 @@ function App() {
       }
     },
     {
+      id: 'augmentation',
+      type: 'augmentation',
+      position: { x: 380, y: 455 },
+      data: {
+        openConceptDialog,
+      }
+    },
+    {
       id: 'model',
       type: 'model',
-      position: { x: 500, y: 400 },
+      position: { x: 750, y: 400 },
       data: {
         config: modelConfig,
         onConfigChange: updateModelConfig,
@@ -74,7 +84,7 @@ function App() {
     {
       id: 'training',
       type: 'training',
-      position: { x: 950, y: 400 },
+      position: { x: 1150, y: 400 },
       data: {
         state: trainingState,
         onStart: startTraining,
@@ -85,7 +95,7 @@ function App() {
     {
       id: 'detection',
       type: 'detection',
-      position: { x: 1500, y: 150 },
+      position: { x: 1700, y: 150 },
       data: {
         results: detectionResults,
         onRunDetection: runDetection,
@@ -95,7 +105,7 @@ function App() {
     {
       id: 'metrics',
       type: 'metrics',
-      position: { x: 1500, y: 650 },
+      position: { x: 1700, y: 650 },
       data: {
         metrics: metrics,
         onReset: resetMetrics,
@@ -109,15 +119,39 @@ function App() {
   ]);
 
   // Define edges connecting the workflow - white dotted lines with flowing animation
-  // Flow: Dataset -> Model Architecture -> Training Monitor -> Detection -> Metrics Dashboard
+  // Flow: Dataset -> Data Augmentation -> Model Architecture -> Training Monitor -> Detection -> Metrics Dashboard
   const edges = useMemo(() => [
     {
-      id: 'e-dataset-model',
+      id: 'e-dataset-augmentation',
       source: 'dataset',
+      target: 'augmentation',
+      type: 'straight',
+      animated: true,
+      label: 'Data',
+      style: { 
+        stroke: '#ffffff', 
+        strokeWidth: 3,
+        strokeDasharray: '6,4'
+      },
+      labelStyle: { 
+        fill: '#ffffff', 
+        fontSize: 12, 
+        fontWeight: 700
+      },
+      labelBgStyle: {
+        fill: '#0c0a09',
+        fillOpacity: 1,
+        stroke: '#ffffff',
+        strokeWidth: 1
+      }
+    },
+    {
+      id: 'e-augmentation-model',
+      source: 'augmentation',
       target: 'model',
       type: 'straight',
-      animated: true,  // Enable dashdraw animation
-      label: 'Data',
+      animated: true,
+      label: 'Augmented Data',
       style: { 
         stroke: '#ffffff', 
         strokeWidth: 3,
