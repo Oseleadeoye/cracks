@@ -8,7 +8,7 @@ import '../visualization/components/nodes/NodeStyles.css';
 
 const Workflow: React.FC = () => {
   return (
-    <div className="workflow-page" style={{ height: 'calc(100vh - 100px)', width: '100%' }}>
+    <div className="h-screen w-full" style={{ background: 'var(--bg-primary)' }}>
       <ReactFlowProvider>
         <NnfsApp />
       </ReactFlowProvider>

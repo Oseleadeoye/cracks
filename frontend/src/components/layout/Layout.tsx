@@ -10,7 +10,8 @@ import {
   Layers,
   LineChart,
   Sparkles,
-  GitGraph
+  GitGraph,
+  ChevronLeft
 } from 'lucide-react';
 import { ThemeToggle } from '../ui/ThemeToggle';
 
@@ -33,11 +34,12 @@ const navItems = [
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const isDemoPage = location.pathname === '/demo';
+  const isWorkflowPage = location.pathname === '/workflow';
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {/* Sidebar - Hidden on demo page */}
-      {!isDemoPage && (
+      {/* Sidebar - Hidden on demo and workflow pages */}
+      {!isDemoPage && !isWorkflowPage && (
         <aside className="w-64 sidebar-clean flex flex-col">
           {/* Logo */}
           <div className="p-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
@@ -83,11 +85,25 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col overflow-hidden ${isDemoPage ? 'w-full' : ''}`}>
-        {/* Header - Hidden on demo page */}
+      <main className={`flex-1 flex flex-col overflow-hidden ${isDemoPage || isWorkflowPage ? 'w-full' : ''}`}>
+        {/* Header - Hidden on demo page only, shown on workflow with back button */}
         {!isDemoPage && (
           <header className="header-clean px-8 py-4 flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-4">
+              {isWorkflowPage && (
+                <Link 
+                  to="/" 
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:opacity-80"
+                  style={{ 
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-primary)'
+                  }}
+                >
+                  <ChevronLeft size={18} />
+                  <span className="text-sm font-medium">Back</span>
+                </Link>
+              )}
               <h2 className="font-serif text-2xl" style={{ color: 'var(--text-primary)' }}>
                 {navItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
               </h2>
@@ -98,9 +114,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </header>
         )}
 
-        {/* Page Content - Full screen on demo page */}
+        {/* Page Content - Full screen on demo and workflow pages */}
         <div 
-          className={`flex-1 overflow-auto ${isDemoPage ? 'p-0 h-screen w-full' : 'p-8'}`} 
+          className={`flex-1 overflow-auto ${isDemoPage || isWorkflowPage ? 'p-0 h-screen w-full' : 'p-8'}`} 
           style={{ backgroundColor: 'var(--bg-primary)' }}
         >
           {children}
