@@ -1,54 +1,29 @@
-import { useState, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Upload, Image, Folder, Database, FileText, Info, Trash2 } from 'lucide-react';
+import { Database, FileText, Folder, Info, Image as ImageIcon, Upload } from 'lucide-react';
 import './NodeStyles.css';
 
 const DatasetNode = ({ data }) => {
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
+  // Sample demonstration data
+  const demoDataset = {
+    name: 'Concrete Crack Dataset',
+    trainImages: 1250,
+    valImages: 150,
+    testImages: 150,
+    classes: ['crack'],
+  };
 
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    const newImages = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      preview: URL.createObjectURL(file),
-      size: file.size
-    }));
-    
-    setUploadedImages(prev => [...prev, ...newImages].slice(0, 6));
-  }, []);
-
-  const handleFileInput = useCallback((e) => {
-    const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
-    const newImages = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      preview: URL.createObjectURL(file),
-      size: file.size
-    }));
-    
-    setUploadedImages(prev => [...prev, ...newImages].slice(0, 6));
-  }, []);
-
-  const removeImage = useCallback((id) => {
-    setUploadedImages(prev => prev.filter(img => img.id !== id));
-  }, []);
+  // Demo images from the demo folder
+  const demoImages = [
+    { id: 1, src: '/demo/1616_jpg.rf.314cac4ea933182f48e1082da574b087.jpg', label: 'Sample 1' },
+    { id: 2, src: '/demo/1625_JPG.rf.413905985d41297fcf7c9348f70fead7.jpg', label: 'Sample 2' },
+    { id: 3, src: '/demo/1066-2-_JPG.rf.02edf51909d67b1b8f6eea4e25e262c4.jpg', label: 'Sample 3' },
+    { id: 4, src: '/demo/1089-3-_JPG.rf.51fe8688e4160b78f58ceea2c41cd4f0.jpg', label: 'Sample 4' },
+    { id: 5, src: '/demo/1896_jpg.rf.a6759200c57921c5fa8260583b1ff0e8.jpg', label: 'Sample 5' },
+    { id: 6, src: '/demo/1706_jpg.rf.44527ec2216182ccb1988d4e69e458be.jpg', label: 'Sample 6' },
+  ];
 
   return (
-    <div className={`node-card dataset-node ${isDragging ? 'dragging' : ''}`}>
+    <div className="node-card dataset-node">
       <Handle type="target" position={Position.Left} className="node-handle" />
       
       <div className="node-header">
@@ -66,61 +41,61 @@ const DatasetNode = ({ data }) => {
       </div>
 
       <div className="node-content">
-        {/* Upload Zone */}
-        <div 
-          className="upload-zone"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <Upload size={24} className="upload-icon" />
-          <p className="upload-text">Drop crack images here</p>
-          <p className="upload-hint">or click to browse</p>
-          <input 
-            type="file" 
-            accept="image/*" 
-            multiple 
-            onChange={handleFileInput}
-            className="file-input"
-          />
+        {/* Upload Instruction */}
+        <div className="upload-instruction">
+          <Upload size={28} />
+          <span>Upload dataset in YOLO format</span>
+          <span className="upload-hint">images/ + labels/ + data.yaml</span>
         </div>
 
-        {/* Preview Grid */}
-        {uploadedImages.length > 0 && (
-          <div className="preview-grid">
-            {uploadedImages.map(img => (
-              <div key={img.id} className="preview-item">
-                <img src={img.preview} alt={img.name} />
-                <button 
-                  className="remove-btn"
-                  onClick={() => removeImage(img.id)}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Dataset Name */}
+        <div className="dataset-name-section">
+          <Folder size={16} />
+          <span className="dataset-name">{demoDataset.name}</span>
+        </div>
+
+        {/* Demo Preview Grid */}
+        <div className="demo-preview-grid">
+          {demoImages.map((img) => (
+            <div key={img.id} className="demo-preview-item">
+              <img 
+                src={img.src} 
+                alt={img.label}
+                className="demo-image"
+              />
+            </div>
+          ))}
+        </div>
 
         {/* Stats */}
         <div className="dataset-stats">
           <div className="stat-item">
-            <Image size={14} />
-            <span>{uploadedImages.length} images</span>
+            <ImageIcon size={14} />
+            <span>{demoDataset.trainImages + demoDataset.valImages + demoDataset.testImages} images</span>
           </div>
           <div className="stat-item">
             <FileText size={14} />
-            <span>1 class: crack</span>
+            <span>{demoDataset.classes.length} class: {demoDataset.classes[0]}</span>
           </div>
         </div>
 
-        {/* YAML Preview */}
-        <div className="yaml-preview">
-          <pre>train: images/train
-val: images/val
-nc: 1
-names: ['crack']</pre>
-        </div>
+        {/* Dataset Split Table */}
+        <table className="dataset-split-table">
+          <tbody>
+            <tr>
+              <td className="split-label">Training</td>
+              <td className="split-value">{demoDataset.trainImages} images</td>
+            </tr>
+            <tr>
+              <td className="split-label">Validation</td>
+              <td className="split-value">{demoDataset.valImages} images</td>
+            </tr>
+            <tr>
+              <td className="split-label">Test</td>
+              <td className="split-value">{demoDataset.testImages} images</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <Handle type="source" position={Position.Right} className="node-handle" />
