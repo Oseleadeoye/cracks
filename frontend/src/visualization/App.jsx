@@ -66,7 +66,7 @@ function App() {
     {
       id: 'augmentation',
       type: 'augmentation',
-      position: { x: 380, y: 455 },
+      position: { x: 400, y: 455 },
       data: {
         openConceptDialog,
       }
@@ -74,7 +74,7 @@ function App() {
     {
       id: 'model',
       type: 'model',
-      position: { x: 750, y: 400 },
+      position: { x: 800, y: 455 },
       data: {
         config: modelConfig,
         onConfigChange: updateModelConfig,
@@ -84,7 +84,7 @@ function App() {
     {
       id: 'training',
       type: 'training',
-      position: { x: 1150, y: 400 },
+      position: { x: 1200, y: 455 },
       data: {
         state: trainingState,
         onStart: startTraining,
@@ -95,7 +95,7 @@ function App() {
     {
       id: 'detection',
       type: 'detection',
-      position: { x: 1700, y: 150 },
+      position: { x: 1600, y: 200 },
       data: {
         results: detectionResults,
         onRunDetection: runDetection,
@@ -105,7 +105,7 @@ function App() {
     {
       id: 'metrics',
       type: 'metrics',
-      position: { x: 1700, y: 650 },
+      position: { x: 1600, y: 650 },
       data: {
         metrics: metrics,
         onReset: resetMetrics,

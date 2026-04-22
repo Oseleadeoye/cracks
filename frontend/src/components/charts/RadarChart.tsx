@@ -194,11 +194,12 @@ const RadarChart: React.FC<RadarChartProps> = ({ sessions, metrics }) => {
                 <text
                   x={labelX}
                   y={labelY}
-                  fontSize={12}
-                  fontWeight={700}
-                  fill="#1c1917"
+                  fontSize={11}
+                  fontWeight={600}
+                  fill="#e7e5e4"
                   textAnchor="middle"
                   dominantBaseline="middle"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
                 >
                   {metric.label}
                 </text>

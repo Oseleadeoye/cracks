@@ -61,10 +61,6 @@ const DataAugmentationNode = ({ data }) => {
         {/* Summary */}
         <div className="augmentation-summary">
           <div className="summary-item">
-            <span className="summary-label">Active:</span>
-            <span className="summary-value">4 techniques</span>
-          </div>
-          <div className="summary-item">
             <span className="summary-label">Dataset size:</span>
             <span className="summary-value">4× (estimated)</span>
           </div>
